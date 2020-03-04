@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using UdemyRealWordUnitTest.Web.Models;
+using UdemyRealWordUnitTest.Web.Repository;
 
 namespace UdemyRealWordUnitTest.Web
 {
@@ -27,6 +28,8 @@ namespace UdemyRealWordUnitTest.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
             services.AddDbContext<UdemyUnitTestDBContext>(options =>
             {
                 options.UseSqlServer(Configuration["SqlConStr"]);

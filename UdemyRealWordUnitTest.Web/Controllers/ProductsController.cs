@@ -6,22 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using UdemyRealWordUnitTest.Web.Models;
+using UdemyRealWordUnitTest.Web.Repository;
 
 namespace UdemyRealWordUnitTest.Web.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly UdemyUnitTestDBContext _context;
+        private readonly IRepository<Product> _repository;
 
-        public ProductsController(UdemyUnitTestDBContext context)
+        public ProductsController(IRepository<Product> repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Product.ToListAsync());
+            return View(await _repository.GetAll());
         }
 
         // GET: Products/Details/5
@@ -32,8 +33,7 @@ namespace UdemyRealWordUnitTest.Web.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Product
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _repository.GetById((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -49,7 +49,7 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         }
 
         // POST: Products/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -57,8 +57,7 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
+                await _repository.Create(product);
                 return RedirectToAction(nameof(Index));
             }
             return View(product);
@@ -72,7 +71,7 @@ namespace UdemyRealWordUnitTest.Web.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Product.FindAsync(id);
+            var product = await _repository.GetById((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -81,11 +80,11 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         }
 
         // POST: Products/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Price,Stock,Color")] Product product)
+        public IActionResult Edit(int id, [Bind("Id,Name,Price,Stock,Color")] Product product)
         {
             if (id != product.Id)
             {
@@ -94,22 +93,8 @@ namespace UdemyRealWordUnitTest.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductExists(product.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                _repository.Update(product);
+
                 return RedirectToAction(nameof(Index));
             }
             return View(product);
@@ -123,8 +108,7 @@ namespace UdemyRealWordUnitTest.Web.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Product
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _repository.GetById((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -138,15 +122,21 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _context.Product.FindAsync(id);
-            _context.Product.Remove(product);
-            await _context.SaveChangesAsync();
+            var product = await _repository.GetById(id);
+
+            _repository.Delete(product);
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool ProductExists(int id)
         {
-            return _context.Product.Any(e => e.Id == id);
+            var product = _repository.GetById(id).Result;
+
+            if (product == null)
+                return false;
+            else
+                return true;
         }
     }
 }

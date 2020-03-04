@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace UdemyRealWordUnitTest.Web.Repository
 {
-    internal interface IRepository<TEntity> where TEntity : class
+    public interface IRepository<TEntity> where TEntity : class
     {
         Task<IEnumerable<TEntity>> GetAll();
 
