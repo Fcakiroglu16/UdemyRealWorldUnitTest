@@ -109,5 +109,15 @@ namespace UdemyRealWordUnitTest.Test
 
             Assert.IsType<Product>(viewResult.Model);
         }
+
+        [Fact]
+        public async void Create_ValidModelState_ReturnRedirectToIndexAction()
+        {
+            var result = await _controller.Create(products.First());
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+
+            Assert.Equal("Index", redirect.ActionName);
+        }
     }
 }
