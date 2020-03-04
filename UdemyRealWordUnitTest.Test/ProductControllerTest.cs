@@ -220,5 +220,18 @@ namespace UdemyRealWordUnitTest.Test
 
             Assert.Equal("Index", redirect.ActionName);
         }
+
+        [Theory]
+        [InlineData(1)]
+        public void EditPOST_ValidModelState_UpdateMethodExecute(int productId)
+        {
+            var product = products.First(x => x.Id == productId);
+
+            _mockRepo.Setup(repo => repo.Update(product));
+
+            _controller.Edit(productId, product);
+
+            _mockRepo.Verify(repo => repo.Update(It.IsAny<Product>()), Times.Once);
+        }
     }
 }
