@@ -241,5 +241,18 @@ namespace UdemyRealWordUnitTest.Test
 
             Assert.IsType<NotFoundResult>(result);
         }
+
+        [Theory]
+        [InlineData(0)]
+        public async void Delete_IdIsNotEqualProduct_ReturnNotFound(int productId)
+        {
+            Product product = null;
+
+            _mockRepo.Setup(x => x.GetById(productId)).ReturnsAsync(product);
+
+            var result = await _controller.Delete(productId);
+
+            Assert.IsType<NotFoundResult>(result);
+        }
     }
 }
