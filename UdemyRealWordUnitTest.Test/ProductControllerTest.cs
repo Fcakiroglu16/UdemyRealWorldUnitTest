@@ -143,5 +143,15 @@ namespace UdemyRealWordUnitTest.Test
 
             _mockRepo.Verify(repo => repo.Create(It.IsAny<Product>()), Times.Never);
         }
+
+        [Fact]
+        public async void Edit_IdIsNull_ReturnRedirectToIndexAction()
+        {
+            var result = await _controller.Edit(null);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+
+            Assert.Equal("Index", redirect.ActionName);
+        }
     }
 }
