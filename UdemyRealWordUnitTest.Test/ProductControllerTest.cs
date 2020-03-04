@@ -100,7 +100,7 @@ namespace UdemyRealWordUnitTest.Test
         }
 
         [Fact]
-        public async void Create_InValidModelState_ReturnView()
+        public async void CreatePOST_InValidModelState_ReturnView()
         {
             _controller.ModelState.AddModelError("Name", "Name alanı gereklidir");
             var result = await _controller.Create(products.First());
@@ -111,13 +111,37 @@ namespace UdemyRealWordUnitTest.Test
         }
 
         [Fact]
-        public async void Create_ValidModelState_ReturnRedirectToIndexAction()
+        public async void CreatePOST_ValidModelState_ReturnRedirectToIndexAction()
         {
             var result = await _controller.Create(products.First());
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
 
             Assert.Equal("Index", redirect.ActionName);
+        }
+
+        [Fact]
+        public async void CreatePOST_ValidModelState_CreateMethodExecute()
+        {
+            Product newProduct = null;
+
+            _mockRepo.Setup(repo => repo.Create(It.IsAny<Product>())).Callback<Product>(x => newProduct = x);
+
+            var result = await _controller.Create(products.First());
+
+            _mockRepo.Verify(repo => repo.Create(It.IsAny<Product>()), Times.Once);
+
+            Assert.Equal(products.First().Id, newProduct.Id);
+        }
+
+        [Fact]
+        public async void CreatePOST_InValidModelState_NeverCreateExecute()
+        {
+            _controller.ModelState.AddModelError("Name", "");
+
+            var result = await _controller.Create(products.First());
+
+            _mockRepo.Verify(repo => repo.Create(It.IsAny<Product>()), Times.Never);
         }
     }
 }
