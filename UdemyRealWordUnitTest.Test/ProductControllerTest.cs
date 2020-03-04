@@ -233,5 +233,13 @@ namespace UdemyRealWordUnitTest.Test
 
             _mockRepo.Verify(repo => repo.Update(It.IsAny<Product>()), Times.Once);
         }
+
+        [Fact]
+        public async void Delete_IdIsNull_ReturnNotFound()
+        {
+            var result = await _controller.Delete(null);
+
+            Assert.IsType<NotFoundResult>(result);
+        }
     }
 }
