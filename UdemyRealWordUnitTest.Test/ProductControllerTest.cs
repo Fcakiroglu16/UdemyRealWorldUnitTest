@@ -196,5 +196,18 @@ namespace UdemyRealWordUnitTest.Test
 
             var redirect = Assert.IsType<NotFoundResult>(result);
         }
+
+        [Theory]
+        [InlineData(1)]
+        public void EditPOST_InValidModelState_ReturnView(int productId)
+        {
+            _controller.ModelState.AddModelError("Name", "");
+
+            var result = _controller.Edit(productId, products.First(x => x.Id == productId));
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+
+            Assert.IsType<Product>(viewResult.Model);
+        }
     }
 }
