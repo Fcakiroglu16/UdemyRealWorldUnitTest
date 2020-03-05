@@ -53,5 +53,24 @@ namespace UdemyRealWordUnitTest.Test
 
             Assert.IsType<NotFoundResult>(result);
         }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public async void GetProduct_IdValid_ReturnOkResult(int productId)
+        {
+            var product = products.First(x => x.Id == productId);
+
+            _mockRepo.Setup(x => x.GetById(productId)).ReturnsAsync(product);
+
+            var result = await _controller.GetProduct(productId);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+
+            var returnProduct = Assert.IsType<Product>(okResult.Value);
+
+            Assert.Equal(productId, returnProduct.Id);
+            Assert.Equal(product.Name, returnProduct.Name);
+        }
     }
 }
