@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UdemyRealWordUnitTest.Web.Controllers;
+using UdemyRealWordUnitTest.Web.Helpers;
 using UdemyRealWordUnitTest.Web.Models;
 using UdemyRealWordUnitTest.Web.Repository;
 using Xunit;
@@ -16,16 +17,25 @@ namespace UdemyRealWordUnitTest.Test
     {
         private readonly Mock<IRepository<Product>> _mockRepo;
         private readonly ProductsApiController _controller;
-
+        private readonly Helper _helper;
         private List<Product> products;
 
         public ProductApiControllerTest()
         {
             _mockRepo = new Mock<IRepository<Product>>();
             _controller = new ProductsApiController(_mockRepo.Object);
-
+            _helper = new Helper();
             products = new List<Product>() { new Product { Id = 1, Name = "Kalem", Price = 100, Stock = 50, Color = "Kırmızı" },
             new Product { Id = 2, Name = "Defter", Price = 200, Stock = 500, Color = "Mavi" }};
+        }
+
+        [Theory]
+        [InlineData(4, 5, 9)]
+        public void Add_SampleValues_ReturnTotal(int a, int b, int total)
+        {
+            var result = _helper.add(a, b);
+
+            Assert.Equal(total, result);
         }
 
         [Fact]
@@ -127,6 +137,21 @@ namespace UdemyRealWordUnitTest.Test
             var resultNotFound = await _controller.DeleteProduct(productId);
 
             Assert.IsType<NotFoundResult>(resultNotFound.Result);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        public async void DeleteProduct_ActionExecute_ReturnNoContent(int productId)
+        {
+            var product = products.First(x => x.Id == productId);
+            _mockRepo.Setup(x => x.GetById(productId)).ReturnsAsync(product);
+            _mockRepo.Setup(x => x.Delete(product));
+
+            var noContentResult = await _controller.DeleteProduct(productId);
+
+            _mockRepo.Verify(x => x.Delete(product), Times.Once);
+
+            Assert.IsType<NoContentResult>(noContentResult.Result);
         }
     }
 }
