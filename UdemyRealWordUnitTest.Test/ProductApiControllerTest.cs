@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UdemyRealWordUnitTest.Web.Controllers;
 using UdemyRealWordUnitTest.Web.Models;
 using UdemyRealWordUnitTest.Web.Repository;
@@ -97,6 +98,22 @@ namespace UdemyRealWordUnitTest.Test
             _mockRepo.Verify(x => x.Update(product), Times.Once);
 
             Assert.IsType<NoContentResult>(result);
+        }
+
+        [Fact]
+        public async void PostProduct_ActionExecutes_ReturnCreatedAtAction()
+        {
+            var product = products.First();
+
+            _mockRepo.Setup(x => x.Create(product)).Returns(Task.CompletedTask);
+
+            var result = await _controller.PostProduct(product);
+
+            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result);
+
+            _mockRepo.Verify(x => x.Create(product), Times.Once);
+
+            Assert.Equal("GetProduct", createdAtActionResult.ActionName);
         }
     }
 }
