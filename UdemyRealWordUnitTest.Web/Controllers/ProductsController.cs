@@ -6,23 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using UdemyRealWordUnitTest.Web.Models;
-using UdemyRealWordUnitTest.Web.Repository;
 
 namespace UdemyRealWordUnitTest.Web.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly IRepository<Product> _repository;
+        private readonly UdemyUnitTestDBContext _context;
 
-        public ProductsController(IRepository<Product> repository)
+        public ProductsController(UdemyUnitTestDBContext context)
         {
-            _repository = repository;
+            _context = context;
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            return View(await _repository.GetAll());
+            var udemyUnitTestDBContext = _context.Product.Include(p => p.Category);
+            return View(await udemyUnitTestDBContext.ToListAsync());
         }
 
         // GET: Products/Details/5
@@ -30,10 +30,12 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         {
             if (id == null)
             {
-                return RedirectToAction("Index");
+                return NotFound();
             }
 
-            var product = await _repository.GetById((int)id);
+            var product = await _context.Product
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 return NotFound();
@@ -45,21 +47,24 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         // GET: Products/Create
         public IActionResult Create()
         {
+            ViewData["CategoryId"] = new SelectList(_context.Category, "Id", "Name");
             return View();
         }
 
         // POST: Products/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Price,Stock,Color")] Product product)
+        public async Task<IActionResult> Create([Bind("Id,Name,Price,Stock,Color,CategoryId")] Product product)
         {
             if (ModelState.IsValid)
             {
-                await _repository.Create(product);
+                _context.Add(product);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["CategoryId"] = new SelectList(_context.Category, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
@@ -68,23 +73,24 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         {
             if (id == null)
             {
-                return RedirectToAction("Index");
+                return NotFound();
             }
 
-            var product = await _repository.GetById((int)id);
+            var product = await _context.Product.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
+            ViewData["CategoryId"] = new SelectList(_context.Category, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
         // POST: Products/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, [Bind("Id,Name,Price,Stock,Color")] Product product)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Price,Stock,Color,CategoryId")] Product product)
         {
             if (id != product.Id)
             {
@@ -93,10 +99,25 @@ namespace UdemyRealWordUnitTest.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                _repository.Update(product);
-
+                try
+                {
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(product.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["CategoryId"] = new SelectList(_context.Category, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
@@ -108,7 +129,9 @@ namespace UdemyRealWordUnitTest.Web.Controllers
                 return NotFound();
             }
 
-            var product = await _repository.GetById((int)id);
+            var product = await _context.Product
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 return NotFound();
@@ -122,21 +145,15 @@ namespace UdemyRealWordUnitTest.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _repository.GetById(id);
-
-            _repository.Delete(product);
-
+            var product = await _context.Product.FindAsync(id);
+            _context.Product.Remove(product);
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ProductExists(int id)
         {
-            var product = _repository.GetById(id).Result;
-
-            if (product == null)
-                return false;
-            else
-                return true;
+            return _context.Product.Any(e => e.Id == id);
         }
     }
 }
