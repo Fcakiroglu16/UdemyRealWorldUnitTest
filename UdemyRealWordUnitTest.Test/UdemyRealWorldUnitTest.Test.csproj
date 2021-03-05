@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UdemyRealWordUnitTest.Web\UdemyRealWordUnitTest.Web.csproj" />
+    <ProjectReference Include="..\UdemyRealWordUnitTest.Web\UdemyRealWorldUnitTest.Web.csproj" />
   </ItemGroup>
 
 </Project>
